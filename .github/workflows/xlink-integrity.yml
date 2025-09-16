@@ -1,0 +1,12 @@
+name: xlink-integrity
+on: { pull_request: { branches: [ plan-latest, asbuilt-latest, lts ] } }
+permissions: { contents: read }
+jobs:
+  xlink:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - run: pip install lxml
+      - run: python scripts/xlink_integrity.py --paths tiles
