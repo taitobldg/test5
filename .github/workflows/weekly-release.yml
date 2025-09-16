@@ -1,0 +1,20 @@
+name: weekly-release
+on:
+  schedule: [ { cron: '0 0 * * 0' } ] # Sun 00:00 UTC (JST 09:00)
+permissions: { contents: write }
+jobs:
+  merge-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: asbuilt-latest, fetch-depth: 0 }
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - run: pip install lxml
+      - run: python scripts/batch_merge_tiles.py --tiles-dir tiles --out-dir out --formats xml,gz
+      - name: Create/Update weekly Release
+        env: { GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} }
+        run: |
+          tag="weekly-asbuilt-latest-$(date +%Y%m%d)"
+          gh release view "$tag" >/dev/null 2>&1 || gh release create "$tag" -t "$tag" -n "Weekly snapshot"
+          gh release upload "$tag" out/* --clobber
